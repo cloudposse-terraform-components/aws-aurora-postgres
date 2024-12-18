@@ -17,7 +17,6 @@ locals {
   admin_password = length(var.admin_password) > 0 ? var.admin_password : join("", random_password.admin_password[*].result)
   database_name  = length(var.database_name) > 0 ? var.database_name : join("", random_pet.database_name[*].id)
 
-
   cluster_dns_name_prefix = format("%v%v%v%v", module.this.name, module.this.delimiter, var.cluster_name, module.this.delimiter)
   cluster_dns_name        = format("%v%v", local.cluster_dns_name_prefix, var.cluster_dns_name_part)
   reader_dns_name         = format("%v%v", local.cluster_dns_name_prefix, var.reader_dns_name_part)
