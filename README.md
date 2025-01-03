@@ -131,7 +131,7 @@ Once a version has been selected, use the following to find the cluster family.
 ```bash
 aws rds describe-db-engine-versions --engine aurora-postgresql --query "DBEngineVersions[]" | \
 jq '.[] | select(.EngineVersion == "15.3") |
-   { Engine: .Engine, EngineVersion: .EngineVersion, DBParameterGroupFamily: .DBParameterGroupFamily }'
+  { Engine: .Engine, EngineVersion: .EngineVersion, DBParameterGroupFamily: .DBParameterGroupFamily }'
 ```
 
 ## Examples
