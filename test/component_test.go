@@ -48,30 +48,29 @@ func TestComponent(t *testing.T) {
 				"engine_mode":                      "provisioned",
 				"engine_version":                   "15.3",
 				"cluster_family":                   "aurora-postgresql15",
-				"cluster_size":                     "2",
+				"cluster_size":                     2,
 				"admin_user":                       "postgres",
 				"admin_password":                   "",
 				"database_name":                    "postgres",
-				"database_port":                    "5432",
-				"enhanced_monitoring_role_enabled": "true",
+				"database_port":                    5432,
+				"enhanced_monitoring_role_enabled": true,
 				"instance_type":                    "db.t3.medium",
-				"mysql_skip_final_snapshot":        "true",
-				"rds_monitoring_enabled":           "true",
-				"rds_monitoring_interval":          "15",
+				"skip_final_snapshot":              true,
+				"rds_monitoring_enabled":           true,
+				"rds_monitoring_interval":          15,
 				"allow_ingress_from_vpc_accounts": []map[string]string{
-				   {
-					   "tenant": "core",
-					   "stage":  "auto",
-				   },
-			   },
-		   }
+					{
+						"tenant": "core",
+						"stage":  "auto",
+					},
+				},
+			}
 
 			defer atm.GetAndDestroy("aurora-postgres/cluster", "default-test", inputs)
 			component := atm.GetAndDeploy("aurora-postgres/cluster", "default-test", inputs)
 
 			clusterARN := atm.Output(component, "aurora_postgres_cluster_arn")
 			require.Equal(t, clusterARN, "")
-
 		})
-
-		
+	})
+}
