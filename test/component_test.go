@@ -41,31 +41,34 @@ func TestComponent(t *testing.T) {
 
 		suite.Test(t, "single-cluster", func(t *testing.T, atm *helper.Atmos) {
 			inputs := map[string]interface{}{
-                "name":                             "shared",
+				"name":                             "shared",
 				"deletion_protection":              false,
 				"storage_encrypted":                true,
-		        "engine":                           "aurora-postgresql",
-				"engine_mode":                      "provisioned"
-				"engine_version":                   "15.3"
-				"cluster_family":                   "aurora-postgresql15"
-				"cluster_size":                     "2"
+				"engine":                           "aurora-postgresql",
+				"engine_mode":                      "provisioned",
+				"engine_version":                   "15.3",
+				"cluster_family":                   "aurora-postgresql15",
+				"cluster_size":                     "2",
 				"aurora_postgres_engine_version":   "8.0.mysql_aurora.3.02.0",
 				"aurora_postgres_cluster_family":   "aurora-mysql8.0",
 				"mysql_name":                       "shared",
 				"mysql_cluster_size":               "2",
 				"admin_user":                       "postgres",
-			    "admin_password":                   "",
-				"database_name":                    "postgres"
-                "database_port":                    "5432"
-                "enhanced_monitoring_role_enabled": "true"
+				"admin_password":                   "",
+				"database_name":                    "postgres",
+				"database_port":                    "5432",
+				"enhanced_monitoring_role_enabled": "true",
 				"instance_type":                    "db.t3.medium",
 				"mysql_skip_final_snapshot":        "true",
-				"enhanced_monitoring_role_enabled": "true"
-				"rds_monitoring_interval":          "15"
-				"allow_ingress_from_vpc_accounts":
-                    - "tenant": "core"
-                      "stage": "auto"
-			}
+				"rds_monitoring_enabled":           "true",
+				"rds_monitoring_interval":          "15",
+				"allow_ingress_from_vpc_accounts": []map[string]string{
+				   {
+					   "tenant": "core",
+					   "stage":  "auto",
+				   },
+			   },
+		   }
 
 			defer atm.GetAndDestroy("aurora-postgres/cluster", "default-test", inputs)
 			component := atm.GetAndDeploy("aurora-postgres/cluster", "default-test", inputs)
