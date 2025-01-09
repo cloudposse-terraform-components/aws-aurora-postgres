@@ -3,7 +3,7 @@ module test
 go 1.23.0
 
 require (
-	github.com/cloudposse/test-helpers v0.12.1-0.20250102170907-1987461476fd
+	github.com/cloudposse/test-helpers v0.12.1-0.20250109031059-3e4cb91c4f88
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gruntwork-io/terratest v0.48.1
 	github.com/mattn/go-zglob v0.0.3 // indirect
@@ -12,7 +12,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/cloudposse/test-helpers => /Users/goruha/projects/cloudposse/current/cloudposse-terraform-components/test-helpers
+// replace github.com/cloudposse/test-helpers => /Users/goruha/projects/cloudposse/current/cloudposse-terraform-components/test-helpers
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
