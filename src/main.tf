@@ -3,6 +3,7 @@ locals {
 
   vpc_id             = module.vpc.outputs.vpc_id
   private_subnet_ids = module.vpc.outputs.private_subnet_ids
+  public_subnet_ids  = module.vpc.outputs.public_subnet_ids
 
   eks_security_group_enabled = local.enabled && var.eks_security_group_enabled
   allowed_eks_security_groups = [
