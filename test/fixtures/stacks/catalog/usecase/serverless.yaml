@@ -17,19 +17,16 @@ components:
 
         dns_gbl_delegated_environment_name: "ue2"
 
-        # Serverless v1 configuration
-        engine_mode: serverless
-        instance_type: "" # serverless engine_mode ignores `var.instance_type`
-        engine_version: "13.12" # Latest supported version as of 08/28/2023
+        # Serverless v2 configuration
+        engine_mode: provisioned
+        instance_type: "db.serverless" # serverless engine_mode ignores `var.instance_type`
+        engine_version: "13.15" # Latest supported version as of 08/28/2023
         cluster_family: aurora-postgresql13
-        cluster_size: 0 # serverless
-        scaling_configuration:
-          - auto_pause: true
-            max_capacity: 4
-            min_capacity: 2
-            seconds_until_auto_pause: 300
-            timeout_action: null
-
+        cluster_size: 1
+         # serverless
+        serverlessv2_scaling_configuration:
+          min_capacity: 2
+          max_capacity: 4
         admin_user: postgres
         admin_password: "" # generate random password
         database_name: postgres
