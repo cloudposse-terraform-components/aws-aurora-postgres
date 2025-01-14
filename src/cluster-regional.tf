@@ -21,7 +21,7 @@ module "aurora_postgres_cluster" {
   publicly_accessible                  = var.publicly_accessible
   db_port                              = var.database_port
   vpc_id                               = local.vpc_id
-  subnets                              = local.private_subnet_ids
+  subnets                              = var.publicly_accessible ? local.public_subnet_ids : local.private_subnet_ids
   zone_id                              = local.zone_id
   cluster_dns_name                     = local.cluster_dns_name
   reader_dns_name                      = local.reader_dns_name
