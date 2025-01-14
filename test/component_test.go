@@ -77,7 +77,7 @@ func TestComponent(t *testing.T) {
 					},
 				},
 			}
-			atm.GetAndDeploy("dns-delegated", "default-test", inputs)
+			atm.GetAndDestroy("dns-delegated", "default-test", inputs)
 		})
 
 		// Test phase: Validate the functionality of the ALB component
