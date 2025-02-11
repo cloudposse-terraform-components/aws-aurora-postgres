@@ -52,14 +52,3 @@ spec:
         - "**/*.tftmpl"
         - "**/modules/**"
       excluded_paths: []
-
-    - component: "aurora-postgres"
-      source: "../../src"
-      targets:
-        - "components/terraform/aurora-postgres"
-      included_paths:
-        - "**/*.tf"
-        - "**/*.md"
-        - "**/*.tftmpl"
-        - "**/modules/**"
-      excluded_paths: []

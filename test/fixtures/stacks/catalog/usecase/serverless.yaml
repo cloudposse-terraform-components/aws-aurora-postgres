@@ -2,7 +2,7 @@ components:
   terraform:
     aurora-postgres/serverless:
       metadata:
-        component: aurora-postgres
+        component: target
       vars:
         enabled: true
         name: db

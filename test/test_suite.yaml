@@ -1,0 +1,7 @@
+configfilepath: test_suite.yaml
+fixturesdir: fixtures
+onlydeploydependencies: false
+randomidentifier: jnhwhd
+srcdir: ../src
+statedir: /var/folders/1l/hcm6nfms6g58mdrpwcxklsvh0000gn/T/atmos-test-helper4122578500/state
+tempdir: /var/folders/1l/hcm6nfms6g58mdrpwcxklsvh0000gn/T/atmos-test-helper4122578500

@@ -2,244 +2,195 @@ package test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cloudposse/test-helpers/pkg/atmos"
-	helper "github.com/cloudposse/test-helpers/pkg/atmos/aws-component-helper"
+	helper "github.com/cloudposse/test-helpers/pkg/atmos/component-helper"
 	"github.com/gruntwork-io/terratest/modules/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/gruntwork-io/terratest/modules/random"
 )
 
-type validationOption struct {
-	DomainName          string `json:"domain_name"`
-	ResourceRecordName  string `json:"resource_record_name"`
-	ResourceRecordType  string `json:"resource_record_type"`
-	ResourceRecordValue string `json:"resource_record_value"`
+type ComponentSuite struct {
+	helper.TestSuite
 }
 
-type zone struct {
-	Arn               string            `json:"arn"`
-	Comment           string            `json:"comment"`
-	DelegationSetId   string            `json:"delegation_set_id"`
-	ForceDestroy      bool              `json:"force_destroy"`
-	Id                string            `json:"id"`
-	Name              string            `json:"name"`
-	NameServers       []string          `json:"name_servers"`
-	PrimaryNameServer string            `json:"primary_name_server"`
-	Tags              map[string]string `json:"tags"`
-	TagsAll           map[string]string `json:"tags_all"`
-	Vpc               []struct {
-		ID     string `json:"vpc_id"`
-		Region string `json:"vpc_region"`
-	} `json:"vpc"`
-	ZoneID string `json:"zone_id"`
+func (s *ComponentSuite) TestBasic() {
+	const component = "aurora-postgres/basic"
+	const stack = "default-test"
+	const awsRegion = "us-east-2"
+
+	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
+	inputs := map[string]interface{}{
+		"name":                "db",
+		"database_name":       "postgres",
+		"admin_user":          "postgres",
+		"database_port":       5432,
+		"publicly_accessible": true,
+		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
+	}
+	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
+	assert.NotNil(s.T(), componentInstance)
+
+	databaseName := atmos.Output(s.T(), componentInstance, "database_name")
+	assert.Equal(s.T(), "postgres", databaseName)
+
+	adminUsername := atmos.Output(s.T(), componentInstance, "admin_username")
+	assert.Equal(s.T(), "postgres", adminUsername)
+
+	delegatedDnsOptions := s.GetAtmosOptions("dns-delegated", stack, nil)
+	delegatedDomainName := atmos.Output(s.T(), delegatedDnsOptions, "default_domain_name")
+	delegatedDomainNZoneId := atmos.Output(s.T(), delegatedDnsOptions, "default_dns_zone_id")
+
+	masterHostname := atmos.Output(s.T(), componentInstance, "master_hostname")
+	expectedMasterHostname := fmt.Sprintf("%s-%s-writer.%s", inputs["name"], componentInstance.Vars["cluster_name"], delegatedDomainName)
+	assert.Equal(s.T(), expectedMasterHostname, masterHostname)
+
+	replicasHostname := atmos.Output(s.T(), componentInstance, "replicas_hostname")
+	expectedReplicasHostname := fmt.Sprintf("%s-%s-reader.%s", inputs["name"], componentInstance.Vars["cluster_name"], delegatedDomainName)
+	assert.Equal(s.T(), expectedReplicasHostname, replicasHostname)
+
+	ssmKeyPaths := atmos.OutputList(s.T(), componentInstance, "ssm_key_paths")
+	assert.Equal(s.T(), 7, len(ssmKeyPaths))
+
+	kmsKeyArn := atmos.Output(s.T(), componentInstance, "kms_key_arn")
+	assert.NotEmpty(s.T(), kmsKeyArn)
+
+	allowedSecurityGroups := atmos.OutputList(s.T(), componentInstance, "allowed_security_groups")
+	assert.Equal(s.T(), 0, len(allowedSecurityGroups))
+
+	clusterIdentifier := atmos.Output(s.T(), componentInstance, "cluster_identifier")
+
+	configMap := map[string]interface{}{}
+	atmos.OutputStruct(s.T(), componentInstance, "config_map", &configMap)
+
+	assert.Equal(s.T(), clusterIdentifier, configMap["cluster"])
+	assert.Equal(s.T(), databaseName, configMap["database"])
+	assert.Equal(s.T(), masterHostname, configMap["hostname"])
+	assert.EqualValues(s.T(), inputs["database_port"], configMap["port"])
+	assert.Equal(s.T(), adminUsername, configMap["username"])
+
+	masterHostnameDNSRecord := aws.GetRoute53Record(s.T(), delegatedDomainNZoneId, masterHostname, "CNAME", awsRegion)
+	assert.Equal(s.T(), *masterHostnameDNSRecord.ResourceRecords[0].Value, configMap["endpoint"])
+
+	passwordSSMKey, ok := configMap["password_ssm_key"].(string)
+	assert.True(s.T(), ok, "password_ssm_key should be a string")
+
+	adminUserPassword := aws.GetParameter(s.T(), awsRegion, passwordSSMKey)
+
+	dbUrl, ok := configMap["endpoint"].(string)
+	assert.True(s.T(), ok, "endpoint should be a string")
+
+	dbPort, ok := inputs["database_port"].(int)
+	assert.True(s.T(), ok, "database_port should be an int")
+
+	schemaExistsInRdsInstance := aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), dbUrl, int32(dbPort), adminUsername, adminUserPassword, databaseName)
+	assert.True(s.T(), schemaExistsInRdsInstance)
+
+	schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), masterHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
+	assert.True(s.T(), schemaExistsInRdsInstance)
+
+	schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), replicasHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
+	assert.True(s.T(), schemaExistsInRdsInstance)
 }
 
-func TestComponent(t *testing.T) {
-	t.Parallel()
-	// Define the AWS region to use for the tests
-	awsRegion := "us-east-2"
+func (s *ComponentSuite) TestServerless() {
+	const component = "aurora-postgres/serverless"
+	const stack = "default-test"
+	const awsRegion = "us-east-2"
 
-	// Initialize the test fixture
-	fixture := helper.NewFixture(t, "../", awsRegion, "test/fixtures")
+	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
+	inputs := map[string]interface{}{
+		"name":                "db",
+		"database_name":       "postgres",
+		"admin_user":          "postgres",
+		"database_port":       5432,
+		"publicly_accessible": true,
+		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
+	}
+	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
+	assert.NotNil(s.T(), componentInstance)
 
-	// Ensure teardown is executed after the test
-	defer fixture.TearDown()
-	fixture.SetUp(&atmos.Options{})
+	databaseName := atmos.Output(s.T(), componentInstance, "database_name")
+	assert.Equal(s.T(), "postgres", databaseName)
 
-	// Define the test suite
-	fixture.Suite("default", func(t *testing.T, suite *helper.Suite) {
-		t.Parallel()
-		suite.AddDependency("vpc", "default-test")
+	adminUsername := atmos.Output(s.T(), componentInstance, "admin_username")
+	assert.Equal(s.T(), "postgres", adminUsername)
 
-		// Setup phase: Create DNS zones for testing
-		suite.Setup(t, func(t *testing.T, atm *helper.Atmos) {
-			// Deploy the delegated DNS zone
-			inputs := map[string]interface{}{
-				"zone_config": []map[string]interface{}{
-					{
-						"subdomain": suite.GetRandomIdentifier(),
-						"zone_name": "components.cptest.test-automation.app",
-					},
-				},
-			}
-			atm.GetAndDeploy("dns-delegated", "default-test", inputs)
-		})
+	delegatedDnsOptions := s.GetAtmosOptions("dns-delegated", stack, nil)
+	delegatedDomainName := atmos.Output(s.T(), delegatedDnsOptions, "default_domain_name")
+	delegatedDomainNZoneId := atmos.Output(s.T(), delegatedDnsOptions, "default_dns_zone_id")
 
-		// Teardown phase: Destroy the DNS zones created during setup
-		suite.TearDown(t, func(t *testing.T, atm *helper.Atmos) {
-			// Deploy the delegated DNS zone
-			inputs := map[string]interface{}{
-				"zone_config": []map[string]interface{}{
-					{
-						"subdomain": suite.GetRandomIdentifier(),
-						"zone_name": "components.cptest.test-automation.app",
-					},
-				},
-			}
-			atm.GetAndDestroy("dns-delegated", "default-test", inputs)
-		})
+	masterHostname := atmos.Output(s.T(), componentInstance, "master_hostname")
+	expectedMasterHostname := fmt.Sprintf("%s-%s-writer.%s", inputs["name"], componentInstance.Vars["cluster_name"], delegatedDomainName)
+	assert.Equal(s.T(), expectedMasterHostname, masterHostname)
 
-		// Test phase: Validate the functionality of the ALB component
-		suite.Test(t, "basic", func(t *testing.T, atm *helper.Atmos) {
-			t.Parallel()
-			inputs := map[string]interface{}{
-				"name":                "db",
-				"database_name":       "postgres",
-				"admin_user":          "postgres",
-				"database_port":       5432,
-				"publicly_accessible": true,
-				"allowed_cidr_blocks": []string{
-					"0.0.0.0/0",
-				},
-			}
+	ssmKeyPaths := atmos.OutputList(s.T(), componentInstance, "ssm_key_paths")
+	assert.Equal(s.T(), 7, len(ssmKeyPaths))
 
-			component := helper.NewAtmosComponent("aurora-postgres/basic", "default-test", inputs)
-			component.Vars["cluster_name"] = component.GetRandomIdentifier()
+	kmsKeyArn := atmos.Output(s.T(), componentInstance, "kms_key_arn")
+	assert.NotEmpty(s.T(), kmsKeyArn)
 
-			defer atm.Destroy(component)
-			atm.Deploy(component)
-			assert.NotNil(t, component)
+	allowedSecurityGroups := atmos.OutputList(s.T(), componentInstance, "allowed_security_groups")
+	assert.Equal(s.T(), 0, len(allowedSecurityGroups))
 
-			databaseName := atm.Output(component, "database_name")
-			assert.Equal(t, "postgres", databaseName)
+	clusterIdentifier := atmos.Output(s.T(), componentInstance, "cluster_identifier")
 
-			adminUsername := atm.Output(component, "admin_username")
-			assert.Equal(t, "postgres", adminUsername)
+	configMap := map[string]interface{}{}
+	atmos.OutputStruct(s.T(), componentInstance, "config_map", &configMap)
 
-			delegatedDnsComponent := helper.NewAtmosComponent("dns-delegated", "default-test", map[string]interface{}{})
-			delegatedDomainName := atm.Output(delegatedDnsComponent, "default_domain_name")
-			delegatedDomainNZoneId := atm.Output(delegatedDnsComponent, "default_dns_zone_id")
+	assert.Equal(s.T(), clusterIdentifier, configMap["cluster"])
+	assert.Equal(s.T(), databaseName, configMap["database"])
+	assert.Equal(s.T(), masterHostname, configMap["hostname"])
+	assert.EqualValues(s.T(), inputs["database_port"], configMap["port"])
+	assert.Equal(s.T(), adminUsername, configMap["username"])
 
-			masterHostname := atm.Output(component, "master_hostname")
-			expectedMasterHostname := fmt.Sprintf("%s-%s-writer.%s", inputs["name"], component.Vars["cluster_name"], delegatedDomainName)
-			assert.Equal(t, expectedMasterHostname, masterHostname)
+	masterHostnameDNSRecord := aws.GetRoute53Record(s.T(), delegatedDomainNZoneId, masterHostname, "CNAME", awsRegion)
+	assert.Equal(s.T(), *masterHostnameDNSRecord.ResourceRecords[0].Value, configMap["endpoint"])
 
-			replicasHostname := atm.Output(component, "replicas_hostname")
-			expectedReplicasHostname := fmt.Sprintf("%s-%s-reader.%s", inputs["name"], component.Vars["cluster_name"], delegatedDomainName)
-			assert.Equal(t, expectedReplicasHostname, replicasHostname)
+	passwordSSMKey, ok := configMap["password_ssm_key"].(string)
+	assert.True(s.T(), ok, "password_ssm_key should be a string")
 
-			ssmKeyPaths := atm.OutputList(component, "ssm_key_paths")
-			assert.Equal(t, 7, len(ssmKeyPaths))
+	adminUserPassword := aws.GetParameter(s.T(), awsRegion, passwordSSMKey)
 
-			kmsKeyArn := atm.Output(component, "kms_key_arn")
-			assert.NotEmpty(t, kmsKeyArn)
+	dbUrl, ok := configMap["endpoint"].(string)
+	assert.True(s.T(), ok, "endpoint should be a string")
 
-			allowedSecurtiyGroups := atm.OutputList(component, "allowed_security_groups")
-			assert.Equal(t, 0, len(allowedSecurtiyGroups))
+	dbPort, ok := inputs["database_port"].(int)
+	assert.True(s.T(), ok, "database_port should be an int")
 
-			clusterIdentifier := atm.Output(component, "cluster_identifier")
+	schemaExistsInRdsInstance := aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), dbUrl, int32(dbPort), adminUsername, adminUserPassword, databaseName)
+	assert.True(s.T(), schemaExistsInRdsInstance)
 
-			configMap := map[string]interface{}{}
-			atm.OutputStruct(component, "config_map", &configMap)
+	schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), masterHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
+	assert.True(s.T(), schemaExistsInRdsInstance)
+}
 
-			assert.Equal(t, clusterIdentifier, configMap["cluster"])
-			assert.Equal(t, databaseName, configMap["database"])
-			assert.Equal(t, masterHostname, configMap["hostname"])
-			assert.EqualValues(t, inputs["database_port"], configMap["port"])
-			assert.Equal(t, adminUsername, configMap["username"])
+func (s *ComponentSuite) TestDisabled() {
+	const component = "aurora-postgres/disabled"
+	const stack = "default-test"
+	const awsRegion = "us-east-2"
 
-			masterHostnameDNSRecord := aws.GetRoute53Record(t, delegatedDomainNZoneId, masterHostname, "CNAME", awsRegion)
-			assert.Equal(t, *masterHostnameDNSRecord.ResourceRecords[0].Value, configMap["endpoint"])
+	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
+	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, nil)
+	assert.Nil(s.T(), componentInstance)
+}
 
-			// Uncomment the following code block to validate the schema creation in the RDS instance
-			// when `publicly_accessible=true`  will use public subnets
+func TestRunSuite(t *testing.T) {
+	suite := new(ComponentSuite)
 
-			passwordSSMKey, ok := configMap["password_ssm_key"].(string)
-			assert.True(t, ok, "password_ssm_key should be a string")
+	suite.AddDependency(t, "vpc", "default-test", nil)
 
-			adminUserPassword := aws.GetParameter(t, awsRegion, passwordSSMKey)
-
-			dbUrl, ok := configMap["endpoint"].(string)
-			assert.True(t, ok, "endpoint should be a string")
-
-			dbPort, ok := inputs["database_port"].(int)
-			assert.True(t, ok, "database_port should be an int")
-
-			schemaExistsInRdsInstance := aws.GetWhetherSchemaExistsInRdsPostgresInstance(t, dbUrl, int32(dbPort), adminUsername, adminUserPassword, databaseName)
-			assert.True(t, schemaExistsInRdsInstance)
-
-			schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(t, masterHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
-			assert.True(t, schemaExistsInRdsInstance)
-
-			schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(t, replicasHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
-			assert.True(t, schemaExistsInRdsInstance)
-		})
-
-		// Test phase: Validate the functionality of the ALB component
-		suite.Test(t, "serverless", func(t *testing.T, atm *helper.Atmos) {
-			t.Parallel()
-			inputs := map[string]interface{}{
-				"name":                "db",
-				"database_name":       "postgres",
-				"admin_user":          "postgres",
-				"database_port":       5432,
-				"publicly_accessible": true,
-				"allowed_cidr_blocks": []string{
-					"0.0.0.0/0",
-				},
-			}
-
-			component := helper.NewAtmosComponent("aurora-postgres/serverless", "default-test", inputs)
-			component.Vars["cluster_name"] = component.GetRandomIdentifier()
-
-			defer atm.Destroy(component)
-			atm.Deploy(component)
-			assert.NotNil(t, component)
-
-			databaseName := atm.Output(component, "database_name")
-			assert.Equal(t, "postgres", databaseName)
-
-			adminUsername := atm.Output(component, "admin_username")
-			assert.Equal(t, "postgres", adminUsername)
-
-			delegatedDnsComponent := helper.NewAtmosComponent("dns-delegated", "default-test", map[string]interface{}{})
-			delegatedDomainName := atm.Output(delegatedDnsComponent, "default_domain_name")
-			delegatedDomainNZoneId := atm.Output(delegatedDnsComponent, "default_dns_zone_id")
-
-			masterHostname := atm.Output(component, "master_hostname")
-			expectedMasterHostname := fmt.Sprintf("%s-%s-writer.%s", inputs["name"], component.Vars["cluster_name"], delegatedDomainName)
-			assert.Equal(t, expectedMasterHostname, masterHostname)
-
-			ssmKeyPaths := atm.OutputList(component, "ssm_key_paths")
-			assert.Equal(t, 7, len(ssmKeyPaths))
-
-			kmsKeyArn := atm.Output(component, "kms_key_arn")
-			assert.NotEmpty(t, kmsKeyArn)
-
-			allowedSecurtiyGroups := atm.OutputList(component, "allowed_security_groups")
-			assert.Equal(t, 0, len(allowedSecurtiyGroups))
-
-			clusterIdentifier := atm.Output(component, "cluster_identifier")
-
-			configMap := map[string]interface{}{}
-			atm.OutputStruct(component, "config_map", &configMap)
-
-			assert.Equal(t, clusterIdentifier, configMap["cluster"])
-			assert.Equal(t, databaseName, configMap["database"])
-			assert.Equal(t, masterHostname, configMap["hostname"])
-			assert.EqualValues(t, inputs["database_port"], configMap["port"])
-			assert.Equal(t, adminUsername, configMap["username"])
-
-			masterHostnameDNSRecord := aws.GetRoute53Record(t, delegatedDomainNZoneId, masterHostname, "CNAME", awsRegion)
-			assert.Equal(t, *masterHostnameDNSRecord.ResourceRecords[0].Value, configMap["endpoint"])
-
-			passwordSSMKey, ok := configMap["password_ssm_key"].(string)
-			assert.True(t, ok, "password_ssm_key should be a string")
-
-			adminUserPassword := aws.GetParameter(t, awsRegion, passwordSSMKey)
-
-			dbUrl, ok := configMap["endpoint"].(string)
-			assert.True(t, ok, "endpoint should be a string")
-
-			dbPort, ok := inputs["database_port"].(int)
-			assert.True(t, ok, "database_port should be an int")
-
-			schemaExistsInRdsInstance := aws.GetWhetherSchemaExistsInRdsPostgresInstance(t, dbUrl, int32(dbPort), adminUsername, adminUserPassword, databaseName)
-			assert.True(t, schemaExistsInRdsInstance)
-
-			schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(t, masterHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
-			assert.True(t, schemaExistsInRdsInstance)
-		})
-	})
+	subdomain := strings.ToLower(random.UniqueId())
+	inputs := map[string]interface{}{
+		"zone_config": []map[string]interface{}{
+			{
+				"subdomain": subdomain,
+				"zone_name": "components.cptest.test-automation.app",
+			},
+		},
+	}
+	suite.AddDependency(t, "dns-delegated", "default-test", &inputs)
+	helper.Run(t, suite)
 }
