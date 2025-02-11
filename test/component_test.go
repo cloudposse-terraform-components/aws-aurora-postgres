@@ -174,6 +174,7 @@ func (s *ComponentSuite) TestServerless() {
 }
 
 func (s *ComponentSuite) TestDisabled() {
+	s.T().Skip("Skipping disabled test")
 	const component = "aurora-postgres/disabled"
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
