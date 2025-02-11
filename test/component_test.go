@@ -21,6 +21,8 @@ func (s *ComponentSuite) TestBasic() {
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
 
+	const clusterName := strings.ToLower(random.UniqueId())
+
 	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
 	inputs := map[string]interface{}{
 		"name":                "db",
@@ -29,6 +31,7 @@ func (s *ComponentSuite) TestBasic() {
 		"database_port":       5432,
 		"publicly_accessible": true,
 		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
+		"cluster_name": clusterName,
 	}
 	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
 	assert.NotNil(s.T(), componentInstance)
@@ -99,6 +102,7 @@ func (s *ComponentSuite) TestServerless() {
 	const component = "aurora-postgres/serverless"
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
+	const clusterName := strings.ToLower(random.UniqueId())
 
 	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
 	inputs := map[string]interface{}{
@@ -108,6 +112,7 @@ func (s *ComponentSuite) TestServerless() {
 		"database_port":       5432,
 		"publicly_accessible": true,
 		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
+		"cluster_name": clusterName,
 	}
 	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
 	assert.NotNil(s.T(), componentInstance)
@@ -172,9 +177,7 @@ func (s *ComponentSuite) TestDisabled() {
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
 
-	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
-	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, nil)
-	assert.Nil(s.T(), componentInstance)
+	s.VerifyEnabledFlag(component, stack, nil)
 }
 
 func TestRunSuite(t *testing.T) {
