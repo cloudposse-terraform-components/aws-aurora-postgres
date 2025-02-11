@@ -21,7 +21,7 @@ func (s *ComponentSuite) TestBasic() {
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
 
-	const clusterName := strings.ToLower(random.UniqueId())
+	const clusterName = strings.ToLower(random.UniqueId())
 
 	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
 	inputs := map[string]interface{}{
@@ -102,7 +102,7 @@ func (s *ComponentSuite) TestServerless() {
 	const component = "aurora-postgres/serverless"
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
-	const clusterName := strings.ToLower(random.UniqueId())
+	const clusterName = strings.ToLower(random.UniqueId())
 
 	defer s.DestroyAtmosComponent(s.T(), component, stack, nil)
 	inputs := map[string]interface{}{
