@@ -96,6 +96,8 @@ func (s *ComponentSuite) TestBasic() {
 
 	schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), replicasHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
 	assert.True(s.T(), schemaExistsInRdsInstance)
+
+	s.DriftTest(component, stack, &inputs)
 }
 
 func (s *ComponentSuite) TestServerless() {
@@ -171,10 +173,11 @@ func (s *ComponentSuite) TestServerless() {
 
 	schemaExistsInRdsInstance = aws.GetWhetherSchemaExistsInRdsPostgresInstance(s.T(), masterHostname, int32(dbPort), adminUsername, adminUserPassword, databaseName)
 	assert.True(s.T(), schemaExistsInRdsInstance)
+
+	s.DriftTest(component, stack, &inputs)
 }
 
 func (s *ComponentSuite) TestDisabled() {
-	s.T().Skip("Skipping disabled test")
 	const component = "aurora-postgres/disabled"
 	const stack = "default-test"
 	const awsRegion = "us-east-2"
