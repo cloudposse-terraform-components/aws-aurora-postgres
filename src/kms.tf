@@ -5,7 +5,7 @@ module "kms_key_rds" {
   description             = "KMS key for Aurora Postgres"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  policy                  = join("", data.aws_iam_policy_document.kms_key_rds.*.json)
+  policy                  = join("", data.aws_iam_policy_document.kms_key_rds[*].json)
 
   context = module.cluster.context
 }
