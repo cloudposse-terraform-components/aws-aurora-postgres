@@ -5,7 +5,7 @@
 # https://www.terraform.io/docs/providers/aws/r/rds_cluster.html
 module "aurora_postgres_cluster" {
   source  = "cloudposse/rds-cluster/aws"
-  version = "1.3.2"
+  version = "2.1.0"
 
   cluster_type   = "regional"
   engine         = var.engine
