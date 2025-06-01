@@ -5,8 +5,3 @@ repository:
   description: This component is responsible for provisioning Aurora Postgres RDS clusters
   homepage: https://cloudposse.com/accelerate
   topics: terraform, terraform-component
-
-
-
-
-
