@@ -271,7 +271,7 @@ components:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.9.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.9.0, < 6.0.0 |
 | <a name="requirement_postgresql"></a> [postgresql](#requirement\_postgresql) | >= 1.17.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 2.3 |
 
@@ -279,7 +279,7 @@ components:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.9.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.9.0, < 6.0.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | >= 2.3 |
 
 ## Modules
