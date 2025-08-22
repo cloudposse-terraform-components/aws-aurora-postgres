@@ -9,7 +9,6 @@ tags:
 
 This component is responsible for provisioning Aurora Postgres RDS clusters. It seeds relevant database information
 (hostnames, username, password, etc.) into AWS SSM Parameter Store.
-
 ## Usage
 
 **Stack Level**: Regional
@@ -158,7 +157,7 @@ components:
         cluster_size: 0 # serverless
         scaling_configuration:
           - auto_pause: true
-            max_capacity: 5
+            max_capacity: 4
             min_capacity: 2
             seconds_until_auto_pause: 300
             timeout_action: null
@@ -245,7 +244,10 @@ components:
 ```
 
 <!-- prettier-ignore-start -->
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- prettier-ignore-end -->
+
+
+<!-- markdownlint-disable -->
 ## Requirements
 
 | Name | Version |
@@ -376,12 +378,17 @@ components:
 | <a name="output_master_hostname"></a> [master\_hostname](#output\_master\_hostname) | Postgres master hostname |
 | <a name="output_replicas_hostname"></a> [replicas\_hostname](#output\_replicas\_hostname) | Postgres replicas hostname |
 | <a name="output_ssm_key_paths"></a> [ssm\_key\_paths](#output\_ssm\_key\_paths) | Names (key paths) of all SSM parameters stored for this cluster |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-<!-- prettier-ignore-end -->
+<!-- markdownlint-restore -->
+
+
 
 ## References
 
-- [cloudposse/terraform-aws-components](https://github.com/cloudposse/terraform-aws-components/tree/main/modules/aurora-postgres) -
-  Cloud Posse's upstream component
+
+- [cloudposse-terraform-components](https://github.com/orgs/cloudposse-terraform-components/repositories) - Cloud Posse's upstream component
+
+
+
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-aurora-postgres&utm_content=)
+
