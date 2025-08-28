@@ -371,11 +371,14 @@ components:
 |------|-------------|
 | <a name="output_admin_username"></a> [admin\_username](#output\_admin\_username) | Postgres admin username |
 | <a name="output_allowed_security_groups"></a> [allowed\_security\_groups](#output\_allowed\_security\_groups) | The resulting list of security group IDs that are allowed to connect to the Aurora Postgres cluster. |
+| <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | Postgres cluster endpoint |
 | <a name="output_cluster_identifier"></a> [cluster\_identifier](#output\_cluster\_identifier) | Postgres cluster identifier |
 | <a name="output_config_map"></a> [config\_map](#output\_config\_map) | Map containing information pertinent to a PostgreSQL client configuration. |
 | <a name="output_database_name"></a> [database\_name](#output\_database\_name) | Postgres database name |
+| <a name="output_instance_endpoints"></a> [instance\_endpoints](#output\_instance\_endpoints) | List of Postgres instance endpoints |
 | <a name="output_kms_key_arn"></a> [kms\_key\_arn](#output\_kms\_key\_arn) | KMS key ARN for Aurora Postgres |
 | <a name="output_master_hostname"></a> [master\_hostname](#output\_master\_hostname) | Postgres master hostname |
+| <a name="output_reader_endpoint"></a> [reader\_endpoint](#output\_reader\_endpoint) | Postgres reader endpoint |
 | <a name="output_replicas_hostname"></a> [replicas\_hostname](#output\_replicas\_hostname) | Postgres replicas hostname |
 | <a name="output_ssm_key_paths"></a> [ssm\_key\_paths](#output\_ssm\_key\_paths) | Names (key paths) of all SSM parameters stored for this cluster |
 <!-- markdownlint-restore -->
@@ -391,4 +394,3 @@ components:
 
 
 [<img src="https://cloudposse.com/logo-300x69.svg" height="32" align="right"/>](https://cpco.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudposse-terraform-components/aws-aurora-postgres&utm_content=)
-

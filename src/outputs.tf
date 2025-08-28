@@ -19,6 +19,21 @@ output "replicas_hostname" {
   description = "Postgres replicas hostname"
 }
 
+output "cluster_endpoint" {
+  value       = module.aurora_postgres_cluster.endpoint
+  description = "Postgres cluster endpoint"
+}
+
+output "reader_endpoint" {
+  value       = module.aurora_postgres_cluster.reader_endpoint
+  description = "Postgres reader endpoint"
+}
+
+output "instance_endpoints" {
+  value       = module.aurora_postgres_cluster.instance_endpoints
+  description = "List of Postgres instance endpoints"
+}
+
 output "cluster_identifier" {
   value       = module.aurora_postgres_cluster.cluster_identifier
   description = "Postgres cluster identifier"
