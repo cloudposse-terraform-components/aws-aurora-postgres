@@ -67,3 +67,8 @@ output "allowed_security_groups" {
   value       = local.allowed_security_groups
   description = "The resulting list of security group IDs that are allowed to connect to the Aurora Postgres cluster."
 }
+
+output "security_group_id" {
+  value       = module.aurora_postgres_cluster.security_group_id
+  description = "The security group ID of the Aurora Postgres cluster"
+}
