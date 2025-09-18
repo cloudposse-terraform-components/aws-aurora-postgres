@@ -49,6 +49,7 @@ module "aurora_postgres_cluster" {
   autoscaling_max_capacity             = var.autoscaling_max_capacity
   scaling_configuration                = var.scaling_configuration
   serverlessv2_scaling_configuration   = var.serverlessv2_scaling_configuration
+  restore_to_point_in_time             = var.restore_to_point_in_time
   skip_final_snapshot                  = var.skip_final_snapshot
   deletion_protection                  = var.deletion_protection
   snapshot_identifier                  = var.snapshot_identifier

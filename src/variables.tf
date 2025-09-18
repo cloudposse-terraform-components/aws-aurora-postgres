@@ -335,6 +335,28 @@ variable "serverlessv2_scaling_configuration" {
   description = "Nested attribute with scaling properties for ServerlessV2. Only valid when `engine_mode` is set to `provisioned.` This is required for Serverless v2"
 }
 
+variable "restore_to_point_in_time" {
+  type = list(object({
+    source_cluster_identifier  = string
+    restore_type               = optional(string, "copy-on-write")
+    use_latest_restorable_time = optional(bool, true)
+    restore_to_time            = optional(string, null)
+  }))
+  default     = []
+  description = <<-EOT
+    List of point-in-time recovery options. Valid parameters are:
+
+    `source_cluster_identifier`
+      Identifier of the source database cluster from which to restore.
+    `restore_type`:
+      Type of restore to be performed. Valid options are "full-copy" and "copy-on-write".
+    `use_latest_restorable_time`:
+      Set to true to restore the database cluster to the latest restorable backup time. Conflicts with `restore_to_time`.
+    `restore_to_time`:
+      Date and time in UTC format to restore the database cluster to. Conflicts with `use_latest_restorable_time`.
+EOT
+}
+
 variable "intra_security_group_traffic_enabled" {
   type        = bool
   default     = false
