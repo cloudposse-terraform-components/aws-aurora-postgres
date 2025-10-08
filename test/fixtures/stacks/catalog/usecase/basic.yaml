@@ -19,7 +19,7 @@ components:
 
         # Provisioned configuration
         engine_mode: provisioned
-        engine_version: "15.3"
+        engine_version: "15.13"
         cluster_family: aurora-postgresql15
         # 1 writer, 1 reader
         cluster_size: 2
