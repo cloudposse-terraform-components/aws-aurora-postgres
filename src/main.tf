@@ -10,7 +10,7 @@ locals {
     for eks in module.eks :
     eks.outputs.eks_cluster_managed_security_group_id
   ]
-  allowed_security_groups = concat(data.aws_security_groups.allowed.ids, local.allowed_eks_security_groups)
+  allowed_security_groups = concat(data.aws_security_groups.allowed.ids, local.allowed_eks_security_groups, var.allowed_security_group_ids)
 
   zone_id = module.dns_gbl_delegated.outputs.default_dns_zone_id
 

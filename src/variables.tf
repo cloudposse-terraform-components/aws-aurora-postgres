@@ -275,6 +275,12 @@ variable "allowed_security_group_names" {
   default     = []
 }
 
+variable "allowed_security_group_ids" {
+  type        = list(string)
+  description = "List of security group ids that should be allowed access to the database"
+  default     = []
+}
+
 variable "eks_security_group_enabled" {
   type        = bool
   description = "Use the eks default security group"
