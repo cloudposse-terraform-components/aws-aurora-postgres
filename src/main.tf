@@ -14,9 +14,14 @@ locals {
 
   zone_id = module.dns_gbl_delegated.outputs.default_dns_zone_id
 
-  admin_user     = length(var.admin_user) > 0 ? var.admin_user : join("", random_pet.admin_user[*].id)
-  admin_password = length(var.admin_password) > 0 ? var.admin_password : join("", random_password.admin_password[*].result)
-  database_name  = length(var.database_name) > 0 ? var.database_name : join("", random_pet.database_name[*].id)
+  # 1. If manage_admin_user_password is not null, AWS manages the password (admin_password must be null)
+  # 2. If admin_password is provided, that value is used (manage_admin_user_password must be null)
+  # 3. If both are null, the module creates a random password
+  create_password = local.enabled && var.admin_password == "" && var.manage_admin_user_password == null
+  admin_password  = local.create_password ? one(random_password.admin_password[*].result) : var.admin_password
+
+  admin_user    = length(var.admin_user) > 0 ? var.admin_user : join("", random_pet.admin_user[*].id)
+  database_name = length(var.database_name) > 0 ? var.database_name : join("", random_pet.database_name[*].id)
 
   cluster_dns_name_prefix = format("%v%v%v%v", module.this.name, module.this.delimiter, var.cluster_name, module.this.delimiter)
   cluster_dns_name        = format("%v%v", local.cluster_dns_name_prefix, var.cluster_dns_name_part)
