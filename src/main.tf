@@ -14,9 +14,9 @@ locals {
 
   zone_id = module.dns_gbl_delegated.outputs.default_dns_zone_id
 
-  # 1. If manage_admin_user_password is not null, AWS manages the password (admin_password must be null)
-  # 2. If admin_password is provided, that value is used (manage_admin_user_password must be null)
-  # 3. If both are null, the module creates a random password
+  # 1. If manage_admin_user_password is true, AWS manages the password (admin_password must be empty)
+  # 2. If admin_password is provided, that value is used (manage_admin_user_password must be false)
+  # 3. If both are unset/false/empty, the module creates a random password
   create_password = local.enabled && var.admin_password == "" && var.manage_admin_user_password == null
   admin_password  = local.create_password ? one(random_password.admin_password[*].result) : var.admin_password
 
