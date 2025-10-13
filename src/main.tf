@@ -18,7 +18,7 @@ locals {
   # 2. If admin_password is provided, that value is used (manage_admin_user_password must be false)
   # 3. If both are unset/false/empty, the module creates a random password
   create_password = local.enabled && var.admin_password == "" && !var.manage_admin_user_password
-  admin_password  = local.create_password ? one(random_password.admin_password[*].result) : var.admin_password
+  admin_password  = var.manage_admin_user_password ? null : (local.create_password ? one(random_password.admin_password[*].result) : var.admin_password)
 
   admin_user    = length(var.admin_user) > 0 ? var.admin_user : join("", random_pet.admin_user[*].id)
   database_name = length(var.database_name) > 0 ? var.database_name : join("", random_pet.database_name[*].id)
