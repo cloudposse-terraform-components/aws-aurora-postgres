@@ -20,8 +20,8 @@ locals {
   create_password = local.enabled && var.admin_password == "" && !var.manage_admin_user_password
   admin_password  = var.manage_admin_user_password ? null : (local.create_password ? one(random_password.admin_password[*].result) : var.admin_password)
 
-  admin_user    = length(var.admin_user) > 0 ? var.admin_user : join("", random_pet.admin_user[*].id)
-  database_name = length(var.database_name) > 0 ? var.database_name : join("", random_pet.database_name[*].id)
+  admin_user    = length(var.admin_user) > 0 ? var.admin_user : one(random_pet.admin_user[*].id)
+  database_name = length(var.database_name) > 0 ? var.database_name : one(random_pet.database_name[*].id)
 
   cluster_dns_name_prefix = format("%v%v%v%v", module.this.name, module.this.delimiter, var.cluster_name, module.this.delimiter)
   cluster_dns_name        = format("%v%v", local.cluster_dns_name_prefix, var.cluster_dns_name_part)
