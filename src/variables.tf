@@ -122,6 +122,13 @@ variable "admin_password" {
   }
 }
 
+variable "manage_admin_user_password" {
+  type        = bool
+  default     = false
+  description = "Set to true to allow RDS to manage the master user password in Secrets Manager. Cannot be set if admin_password is provided"
+  nullable    = false
+}
+
 # https://aws.amazon.com/rds/aurora/pricing
 variable "instance_type" {
   type        = string

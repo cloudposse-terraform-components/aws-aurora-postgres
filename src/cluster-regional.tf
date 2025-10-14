@@ -7,16 +7,17 @@ module "aurora_postgres_cluster" {
   source  = "cloudposse/rds-cluster/aws"
   version = "2.2.0"
 
-  cluster_type   = "regional"
-  engine         = var.engine
-  engine_version = var.engine_version
-  engine_mode    = var.engine_mode
-  cluster_family = var.cluster_family
-  instance_type  = var.instance_type
-  cluster_size   = var.cluster_size
-  promotion_tier = var.promotion_tier
-  admin_user     = local.admin_user
-  admin_password = local.admin_password
+  cluster_type               = "regional"
+  engine                     = var.engine
+  engine_version             = var.engine_version
+  engine_mode                = var.engine_mode
+  cluster_family             = var.cluster_family
+  instance_type              = var.instance_type
+  cluster_size               = var.cluster_size
+  promotion_tier             = var.promotion_tier
+  admin_user                 = local.admin_user
+  admin_password             = local.admin_password
+  manage_admin_user_password = var.manage_admin_user_password
 
   db_name                              = local.database_name
   publicly_accessible                  = var.publicly_accessible
