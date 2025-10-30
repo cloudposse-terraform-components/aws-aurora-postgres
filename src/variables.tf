@@ -198,11 +198,6 @@ variable "database_insights_mode" {
   type        = string
   description = "The database insights mode for the RDS cluster. Valid values are `standard`, `advanced`. See https://registry.terraform.io/providers/hashicorp/aws/6.16.0/docs/resources/rds_cluster#database_insights_mode-1"
   default     = null
-
-  validation {
-    condition     = contains(["standard", "advanced"], var.database_insights_mode)
-    error_message = "Allowed values: `standard`, `advanced`."
-  }
 }
 
 variable "enhanced_monitoring_role_enabled" {
