@@ -5,7 +5,7 @@
 # https://www.terraform.io/docs/providers/aws/r/rds_cluster.html
 module "aurora_postgres_cluster" {
   source  = "cloudposse/rds-cluster/aws"
-  version = "2.2.0"
+  version = "2.3.0"
 
   cluster_type               = "regional"
   engine                     = var.engine
@@ -39,6 +39,7 @@ module "aurora_postgres_cluster" {
   enhanced_monitoring_role_enabled     = var.enhanced_monitoring_role_enabled
   enhanced_monitoring_attributes       = var.enhanced_monitoring_attributes
   performance_insights_enabled         = var.performance_insights_enabled
+  database_insights_mode               = var.database_insights_mode
   rds_monitoring_interval              = var.rds_monitoring_interval
   autoscaling_enabled                  = var.autoscaling_enabled
   autoscaling_policy_type              = var.autoscaling_policy_type

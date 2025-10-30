@@ -194,6 +194,12 @@ variable "performance_insights_enabled" {
   description = "Whether to enable Performance Insights"
 }
 
+variable "database_insights_mode" {
+  type        = string
+  description = "The database insights mode for the RDS cluster. Valid values are `standard`, `advanced`. See https://registry.terraform.io/providers/hashicorp/aws/6.16.0/docs/resources/rds_cluster#database_insights_mode-1"
+  default     = null
+}
+
 variable "enhanced_monitoring_role_enabled" {
   type        = bool
   description = "A boolean flag to enable/disable the creation of the enhanced monitoring IAM role. If set to `false`, the module will not create a new role and will use `rds_monitoring_role_arn` for enhanced monitoring"
