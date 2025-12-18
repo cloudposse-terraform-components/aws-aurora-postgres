@@ -409,3 +409,132 @@ variable "ssm_cluster_name_override" {
   default     = ""
   description = "Set a cluster name into the ssm path prefix"
 }
+
+# RDS Proxy Configuration
+variable "proxy_enabled" {
+  type        = bool
+  default     = false
+  description = "Whether to enable RDS Proxy for the Aurora cluster"
+}
+
+variable "proxy_debug_logging" {
+  type        = bool
+  default     = false
+  description = "Whether the proxy includes detailed information about SQL statements in its logs"
+}
+
+variable "proxy_idle_client_timeout" {
+  type        = number
+  default     = 1800
+  description = "The number of seconds that a connection to the proxy can be inactive before the proxy disconnects it"
+}
+
+variable "proxy_require_tls" {
+  type        = bool
+  default     = true
+  description = "A Boolean parameter that specifies whether Transport Layer Security (TLS) encryption is required for connections to the proxy"
+}
+
+variable "proxy_connection_borrow_timeout" {
+  type        = number
+  default     = 120
+  description = "The number of seconds for a proxy to wait for a connection to become available in the connection pool"
+}
+
+variable "proxy_init_query" {
+  type        = string
+  default     = null
+  description = "One or more SQL statements for the proxy to run when opening each new database connection"
+}
+
+variable "proxy_max_connections_percent" {
+  type        = number
+  default     = 100
+  description = "The maximum size of the connection pool for each target in a target group"
+}
+
+variable "proxy_max_idle_connections_percent" {
+  type        = number
+  default     = 50
+  description = "Controls how actively the proxy closes idle database connections in the connection pool"
+}
+
+variable "proxy_session_pinning_filters" {
+  type        = list(string)
+  default     = null
+  description = "Each item in the list represents a class of SQL operations that normally cause all later statements in a session using a proxy to be pinned to the same underlying database connection"
+}
+
+variable "proxy_iam_role_attributes" {
+  type        = list(string)
+  default     = null
+  description = "Additional attributes to add to the ID of the IAM role that the proxy uses to access secrets in AWS Secrets Manager"
+}
+
+variable "proxy_existing_iam_role_arn" {
+  type        = string
+  default     = null
+  description = "The ARN of an existing IAM role that the proxy can use to access secrets in AWS Secrets Manager. If not provided, the module will create a role to access secrets in Secrets Manager"
+}
+
+variable "proxy_secret_arn" {
+  type        = string
+  default     = null
+  description = "The ARN of the secret in AWS Secrets Manager that contains the database credentials. Required if manage_admin_user_password is false and proxy_auth is not provided"
+}
+
+variable "proxy_auth" {
+  type = list(object({
+    auth_scheme               = optional(string, "SECRETS")
+    client_password_auth_type = optional(string)
+    description               = optional(string)
+    iam_auth                  = optional(string, "DISABLED")
+    secret_arn                = optional(string)
+    username                  = optional(string)
+  }))
+  default     = null
+  description = <<-EOT
+    Configuration blocks with authorization mechanisms to connect to the associated database instances or clusters.
+    Each block supports:
+    - auth_scheme: The type of authentication that the proxy uses for connections. Valid values: SECRETS
+    - client_password_auth_type: The type of authentication the proxy uses for connections from clients. Valid values: MYSQL_NATIVE_PASSWORD, POSTGRES_SCRAM_SHA_256, POSTGRES_MD5, SQL_SERVER_AUTHENTICATION
+    - description: A user-specified description about the authentication used by a proxy
+    - iam_auth: Whether to require or disallow AWS IAM authentication. Valid values: DISABLED, REQUIRED, OPTIONAL
+    - secret_arn: The ARN of the Secrets Manager secret containing the database credentials
+    - username: The name of the database user to which the proxy connects
+  EOT
+}
+
+variable "proxy_iam_auth" {
+  type        = string
+  default     = "DISABLED"
+  description = "Whether to require or disallow AWS IAM authentication for connections to the proxy. Valid values: DISABLED, REQUIRED, OPTIONAL"
+
+  validation {
+    condition     = contains(["DISABLED", "REQUIRED", "OPTIONAL"], var.proxy_iam_auth)
+    error_message = "Valid values for proxy_iam_auth are: DISABLED, REQUIRED, OPTIONAL."
+  }
+}
+
+variable "proxy_client_password_auth_type" {
+  type        = string
+  default     = null
+  description = "The type of authentication the proxy uses for connections from clients. Valid values: MYSQL_NATIVE_PASSWORD, POSTGRES_SCRAM_SHA_256, POSTGRES_MD5, SQL_SERVER_AUTHENTICATION"
+
+  validation {
+    condition     = var.proxy_client_password_auth_type == null || contains(["MYSQL_NATIVE_PASSWORD", "POSTGRES_SCRAM_SHA_256", "POSTGRES_MD5", "SQL_SERVER_AUTHENTICATION"], var.proxy_client_password_auth_type)
+    error_message = "Valid values for proxy_client_password_auth_type are: MYSQL_NATIVE_PASSWORD, POSTGRES_SCRAM_SHA_256, POSTGRES_MD5, SQL_SERVER_AUTHENTICATION."
+  }
+}
+
+variable "proxy_dns_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether to create a Route53 DNS record for the proxy endpoint"
+}
+
+variable "proxy_dns_name_part" {
+  type        = string
+  default     = "proxy"
+  description = "Part of DNS name added to module and cluster name for DNS for the proxy endpoint"
+}
