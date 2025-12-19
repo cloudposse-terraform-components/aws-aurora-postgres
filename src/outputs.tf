@@ -72,3 +72,69 @@ output "security_group_id" {
   value       = module.aurora_postgres_cluster.security_group_id
   description = "The security group ID of the Aurora Postgres cluster"
 }
+
+# RDS Proxy Outputs
+output "proxy_id" {
+  value       = one(module.rds_proxy[*].proxy_id)
+  description = "The ID of the RDS Proxy"
+}
+
+output "proxy_arn" {
+  value       = one(module.rds_proxy[*].proxy_arn)
+  description = "The ARN of the RDS Proxy"
+}
+
+output "proxy_endpoint" {
+  value       = one(module.rds_proxy[*].proxy_endpoint)
+  description = "The endpoint of the RDS Proxy"
+}
+
+output "proxy_dns_name" {
+  value       = one(aws_route53_record.proxy[*].fqdn)
+  description = "The DNS name of the RDS Proxy (Route53 record)"
+}
+
+output "proxy_target_endpoint" {
+  value       = one(module.rds_proxy[*].proxy_target_endpoint)
+  description = "Hostname for the target RDS DB Instance"
+}
+
+output "proxy_target_id" {
+  value       = one(module.rds_proxy[*].proxy_target_id)
+  description = "Identifier of db_proxy_name, target_group_name, target type, and resource identifier separated by forward slashes"
+}
+
+output "proxy_target_port" {
+  value       = one(module.rds_proxy[*].proxy_target_port)
+  description = "Port for the target Aurora DB cluster"
+}
+
+output "proxy_target_rds_resource_id" {
+  value       = one(module.rds_proxy[*].proxy_target_rds_resource_id)
+  description = "Identifier representing the DB cluster target"
+}
+
+output "proxy_target_type" {
+  value       = one(module.rds_proxy[*].proxy_target_type)
+  description = "Type of target (e.g. RDS_INSTANCE or TRACKED_CLUSTER)"
+}
+
+output "proxy_default_target_group_arn" {
+  value       = one(module.rds_proxy[*].proxy_default_target_group_arn)
+  description = "The Amazon Resource Name (ARN) representing the default target group"
+}
+
+output "proxy_default_target_group_name" {
+  value       = one(module.rds_proxy[*].proxy_default_target_group_name)
+  description = "The name of the default target group"
+}
+
+output "proxy_iam_role_arn" {
+  value       = one(module.rds_proxy[*].proxy_iam_role_arn)
+  description = "The ARN of the IAM role that the proxy uses to access secrets in AWS Secrets Manager"
+}
+
+output "proxy_security_group_id" {
+  value       = one(aws_security_group.proxy[*].id)
+  description = "The security group ID of the RDS Proxy"
+}
