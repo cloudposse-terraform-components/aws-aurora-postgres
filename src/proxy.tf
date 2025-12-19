@@ -76,9 +76,10 @@ module "rds_proxy" {
 
   db_cluster_identifier = module.aurora_postgres_cluster.cluster_identifier
 
-  auth                         = local.proxy_auth
-  engine_family                = local.proxy_engine_family
-  vpc_subnet_ids               = var.publicly_accessible ? local.public_subnet_ids : local.private_subnet_ids
+  auth          = local.proxy_auth
+  engine_family = local.proxy_engine_family
+  # RDS Proxy must always be in private subnets for security
+  vpc_subnet_ids               = local.private_subnet_ids
   vpc_security_group_ids       = [aws_security_group.proxy[0].id]
   debug_logging                = var.proxy_debug_logging
   idle_client_timeout          = var.proxy_idle_client_timeout
