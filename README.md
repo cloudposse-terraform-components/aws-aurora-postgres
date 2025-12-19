@@ -327,6 +327,7 @@ components:
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../account-map/modules/iam-roles | n/a |
 | <a name="module_kms_key_rds"></a> [kms\_key\_rds](#module\_kms\_key\_rds) | cloudposse/kms-key/aws | 0.12.2 |
 | <a name="module_parameter_store_write"></a> [parameter\_store\_write](#module\_parameter\_store\_write) | cloudposse/ssm-parameter-store/aws | 0.13.0 |
+| <a name="module_rds_proxy"></a> [rds\_proxy](#module\_rds\_proxy) | cloudposse/rds-db-proxy/aws | 1.1.1 |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
 | <a name="module_vpc_ingress"></a> [vpc\_ingress](#module\_vpc\_ingress) | cloudposse/stack-config/yaml//modules/remote-state | 1.8.0 |
@@ -335,6 +336,10 @@ components:
 
 | Name | Type |
 |------|------|
+| [aws_route53_record.proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_security_group.proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group_rule.cluster_ingress_from_proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.proxy_egress_to_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [random_password.admin_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_pet.admin_user](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/pet) | resource |
 | [random_pet.database_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/pet) | resource |
@@ -403,6 +408,23 @@ components:
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | ID element. Usually an abbreviation of your organization name, e.g. 'eg' or 'cp', to help ensure generated IDs are globally unique | `string` | `null` | no |
 | <a name="input_performance_insights_enabled"></a> [performance\_insights\_enabled](#input\_performance\_insights\_enabled) | Whether to enable Performance Insights | `bool` | `false` | no |
 | <a name="input_promotion_tier"></a> [promotion\_tier](#input\_promotion\_tier) | Failover Priority setting on instance level. The reader who has lower tier has higher priority to get promoted to writer.<br/><br/>Readers in promotion tiers 0 and 1 scale at the same time as the writer. Readers in promotion tiers 2–15 scale independently from the writer. For more information, see: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html#aurora-serverless-v2.how-it-works.scaling | `number` | `0` | no |
+| <a name="input_proxy_auth"></a> [proxy\_auth](#input\_proxy\_auth) | Configuration blocks with authorization mechanisms to connect to the associated database instances or clusters.<br/>Each block supports:<br/>- auth\_scheme: The type of authentication that the proxy uses for connections. Valid values: SECRETS<br/>- client\_password\_auth\_type: The type of authentication the proxy uses for connections from clients. Valid values: MYSQL\_NATIVE\_PASSWORD, POSTGRES\_SCRAM\_SHA\_256, POSTGRES\_MD5, SQL\_SERVER\_AUTHENTICATION<br/>- description: A user-specified description about the authentication used by a proxy<br/>- iam\_auth: Whether to require or disallow AWS IAM authentication. Valid values: DISABLED, REQUIRED, OPTIONAL<br/>- secret\_arn: The ARN of the Secrets Manager secret containing the database credentials<br/>- username: The name of the database user to which the proxy connects | <pre>list(object({<br/>    auth_scheme               = optional(string, "SECRETS")<br/>    client_password_auth_type = optional(string)<br/>    description               = optional(string)<br/>    iam_auth                  = optional(string, "DISABLED")<br/>    secret_arn                = optional(string)<br/>    username                  = optional(string)<br/>  }))</pre> | `null` | no |
+| <a name="input_proxy_client_password_auth_type"></a> [proxy\_client\_password\_auth\_type](#input\_proxy\_client\_password\_auth\_type) | The type of authentication the proxy uses for connections from clients. Valid values: MYSQL\_NATIVE\_PASSWORD, POSTGRES\_SCRAM\_SHA\_256, POSTGRES\_MD5, SQL\_SERVER\_AUTHENTICATION | `string` | `null` | no |
+| <a name="input_proxy_connection_borrow_timeout"></a> [proxy\_connection\_borrow\_timeout](#input\_proxy\_connection\_borrow\_timeout) | The number of seconds for a proxy to wait for a connection to become available in the connection pool | `number` | `120` | no |
+| <a name="input_proxy_debug_logging"></a> [proxy\_debug\_logging](#input\_proxy\_debug\_logging) | Whether the proxy includes detailed information about SQL statements in its logs | `bool` | `false` | no |
+| <a name="input_proxy_dns_enabled"></a> [proxy\_dns\_enabled](#input\_proxy\_dns\_enabled) | Whether to create a Route53 DNS record for the proxy endpoint | `bool` | `true` | no |
+| <a name="input_proxy_dns_name_part"></a> [proxy\_dns\_name\_part](#input\_proxy\_dns\_name\_part) | Part of DNS name added to module and cluster name for DNS for the proxy endpoint | `string` | `"proxy"` | no |
+| <a name="input_proxy_enabled"></a> [proxy\_enabled](#input\_proxy\_enabled) | Whether to enable RDS Proxy for the Aurora cluster | `bool` | `false` | no |
+| <a name="input_proxy_existing_iam_role_arn"></a> [proxy\_existing\_iam\_role\_arn](#input\_proxy\_existing\_iam\_role\_arn) | The ARN of an existing IAM role that the proxy can use to access secrets in AWS Secrets Manager. If not provided, the module will create a role to access secrets in Secrets Manager | `string` | `null` | no |
+| <a name="input_proxy_iam_auth"></a> [proxy\_iam\_auth](#input\_proxy\_iam\_auth) | Whether to require or disallow AWS IAM authentication for connections to the proxy. Valid values: DISABLED, REQUIRED, OPTIONAL | `string` | `"DISABLED"` | no |
+| <a name="input_proxy_iam_role_attributes"></a> [proxy\_iam\_role\_attributes](#input\_proxy\_iam\_role\_attributes) | Additional attributes to add to the ID of the IAM role that the proxy uses to access secrets in AWS Secrets Manager | `list(string)` | `null` | no |
+| <a name="input_proxy_idle_client_timeout"></a> [proxy\_idle\_client\_timeout](#input\_proxy\_idle\_client\_timeout) | The number of seconds that a connection to the proxy can be inactive before the proxy disconnects it | `number` | `1800` | no |
+| <a name="input_proxy_init_query"></a> [proxy\_init\_query](#input\_proxy\_init\_query) | One or more SQL statements for the proxy to run when opening each new database connection | `string` | `null` | no |
+| <a name="input_proxy_max_connections_percent"></a> [proxy\_max\_connections\_percent](#input\_proxy\_max\_connections\_percent) | The maximum size of the connection pool for each target in a target group. Must be between 1 and 100. | `number` | `100` | no |
+| <a name="input_proxy_max_idle_connections_percent"></a> [proxy\_max\_idle\_connections\_percent](#input\_proxy\_max\_idle\_connections\_percent) | Controls how actively the proxy closes idle database connections in the connection pool. Must be between 0 and 100. | `number` | `50` | no |
+| <a name="input_proxy_require_tls"></a> [proxy\_require\_tls](#input\_proxy\_require\_tls) | A Boolean parameter that specifies whether Transport Layer Security (TLS) encryption is required for connections to the proxy | `bool` | `true` | no |
+| <a name="input_proxy_secret_arn"></a> [proxy\_secret\_arn](#input\_proxy\_secret\_arn) | The ARN of the secret in AWS Secrets Manager that contains the database credentials. Required if manage\_admin\_user\_password is false and proxy\_auth is not provided | `string` | `null` | no |
+| <a name="input_proxy_session_pinning_filters"></a> [proxy\_session\_pinning\_filters](#input\_proxy\_session\_pinning\_filters) | Each item in the list represents a class of SQL operations that normally cause all later statements in a session using a proxy to be pinned to the same underlying database connection | `list(string)` | `null` | no |
 | <a name="input_publicly_accessible"></a> [publicly\_accessible](#input\_publicly\_accessible) | Set true to make this database accessible from the public internet | `bool` | `false` | no |
 | <a name="input_rds_monitoring_interval"></a> [rds\_monitoring\_interval](#input\_rds\_monitoring\_interval) | The interval, in seconds, between points when enhanced monitoring metrics are collected for the DB instance. To disable collecting Enhanced Monitoring metrics, specify 0. The default is 0. Valid Values: 0, 1, 5, 10, 15, 30, 60 | `number` | `60` | no |
 | <a name="input_reader_dns_name_part"></a> [reader\_dns\_name\_part](#input\_reader\_dns\_name\_part) | Part of DNS name added to module and cluster name for DNS for cluster reader | `string` | `"reader"` | no |
@@ -435,6 +457,19 @@ components:
 | <a name="output_instance_endpoints"></a> [instance\_endpoints](#output\_instance\_endpoints) | List of Postgres instance endpoints |
 | <a name="output_kms_key_arn"></a> [kms\_key\_arn](#output\_kms\_key\_arn) | KMS key ARN for Aurora Postgres |
 | <a name="output_master_hostname"></a> [master\_hostname](#output\_master\_hostname) | Postgres master hostname |
+| <a name="output_proxy_arn"></a> [proxy\_arn](#output\_proxy\_arn) | The ARN of the RDS Proxy |
+| <a name="output_proxy_default_target_group_arn"></a> [proxy\_default\_target\_group\_arn](#output\_proxy\_default\_target\_group\_arn) | The Amazon Resource Name (ARN) representing the default target group |
+| <a name="output_proxy_default_target_group_name"></a> [proxy\_default\_target\_group\_name](#output\_proxy\_default\_target\_group\_name) | The name of the default target group |
+| <a name="output_proxy_dns_name"></a> [proxy\_dns\_name](#output\_proxy\_dns\_name) | The DNS name of the RDS Proxy (Route53 record) |
+| <a name="output_proxy_endpoint"></a> [proxy\_endpoint](#output\_proxy\_endpoint) | The endpoint of the RDS Proxy |
+| <a name="output_proxy_iam_role_arn"></a> [proxy\_iam\_role\_arn](#output\_proxy\_iam\_role\_arn) | The ARN of the IAM role that the proxy uses to access secrets in AWS Secrets Manager |
+| <a name="output_proxy_id"></a> [proxy\_id](#output\_proxy\_id) | The ID of the RDS Proxy |
+| <a name="output_proxy_security_group_id"></a> [proxy\_security\_group\_id](#output\_proxy\_security\_group\_id) | The security group ID of the RDS Proxy |
+| <a name="output_proxy_target_endpoint"></a> [proxy\_target\_endpoint](#output\_proxy\_target\_endpoint) | Hostname for the target RDS DB Instance |
+| <a name="output_proxy_target_id"></a> [proxy\_target\_id](#output\_proxy\_target\_id) | Identifier of db\_proxy\_name, target\_group\_name, target type, and resource identifier separated by forward slashes |
+| <a name="output_proxy_target_port"></a> [proxy\_target\_port](#output\_proxy\_target\_port) | Port for the target Aurora DB cluster |
+| <a name="output_proxy_target_rds_resource_id"></a> [proxy\_target\_rds\_resource\_id](#output\_proxy\_target\_rds\_resource\_id) | Identifier representing the DB cluster target |
+| <a name="output_proxy_target_type"></a> [proxy\_target\_type](#output\_proxy\_target\_type) | Type of target (e.g. RDS\_INSTANCE or TRACKED\_CLUSTER) |
 | <a name="output_reader_endpoint"></a> [reader\_endpoint](#output\_reader\_endpoint) | Postgres reader endpoint |
 | <a name="output_replicas_hostname"></a> [replicas\_hostname](#output\_replicas\_hostname) | Postgres replicas hostname |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The security group ID of the Aurora Postgres cluster |
