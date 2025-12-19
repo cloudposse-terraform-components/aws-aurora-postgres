@@ -39,13 +39,6 @@ module "rds_proxy" {
 
   db_cluster_identifier = module.aurora_postgres_cluster.cluster_identifier
 
-  lifecycle {
-    precondition {
-      condition     = contains(["mysql", "postgresql", "sqlserver"], var.engine)
-      error_message = "RDS Proxy only supports MYSQL, POSTGRESQL, and SQLSERVER engine families. The engine '${var.engine}' is not supported."
-    }
-  }
-
   auth                         = local.proxy_auth
   engine_family                = local.proxy_engine_family
   vpc_subnet_ids               = var.publicly_accessible ? local.public_subnet_ids : local.private_subnet_ids
@@ -73,4 +66,11 @@ resource "aws_route53_record" "proxy" {
   type    = "CNAME"
   ttl     = 60
   records = [module.rds_proxy[0].proxy_endpoint]
+}
+
+check "proxy_engine_supported" {
+  assert {
+    condition     = !var.proxy_enabled || contains(["mysql", "postgresql", "sqlserver"], var.engine)
+    error_message = "RDS Proxy only supports MYSQL, POSTGRESQL, and SQLSERVER engine families. The engine '${var.engine}' is not supported."
+  }
 }
