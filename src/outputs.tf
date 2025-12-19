@@ -133,3 +133,8 @@ output "proxy_iam_role_arn" {
   value       = one(module.rds_proxy[*].proxy_iam_role_arn)
   description = "The ARN of the IAM role that the proxy uses to access secrets in AWS Secrets Manager"
 }
+
+output "proxy_security_group_id" {
+  value       = one(aws_security_group.proxy[*].id)
+  description = "The security group ID of the RDS Proxy"
+}

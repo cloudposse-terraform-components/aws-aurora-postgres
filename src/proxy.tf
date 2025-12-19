@@ -11,7 +11,7 @@ locals {
 
   # Get the secret ARN for authentication - either from managed password or user-provided
   # When manage_admin_user_password is true, the cluster creates a secret in Secrets Manager
-  proxy_secret_arn = var.manage_admin_user_password ? module.aurora_postgres_cluster.admin_user_secret[0].secret_arn : var.proxy_secret_arn
+  proxy_secret_arn = var.manage_admin_user_password ? module.aurora_postgres_cluster.master_user_secret[0].secret_arn : var.proxy_secret_arn
 
   # Build auth configuration
   proxy_auth = var.proxy_auth != null ? var.proxy_auth : (
@@ -31,6 +31,43 @@ locals {
   proxy_dns_name = format("%v%v", local.cluster_dns_name_prefix, var.proxy_dns_name_part)
 }
 
+# Dedicated security group for RDS Proxy
+resource "aws_security_group" "proxy" {
+  count = local.proxy_enabled ? 1 : 0
+
+  name        = "${module.cluster.id}-proxy"
+  description = "Security group for RDS Proxy"
+  vpc_id      = local.vpc_id
+
+  tags = module.cluster.tags
+}
+
+# Egress rule: Allow proxy to connect to Aurora cluster on database port
+resource "aws_security_group_rule" "proxy_egress_to_cluster" {
+  count = local.proxy_enabled ? 1 : 0
+
+  type                     = "egress"
+  from_port                = var.database_port
+  to_port                  = var.database_port
+  protocol                 = "tcp"
+  source_security_group_id = module.aurora_postgres_cluster.security_group_id
+  security_group_id        = aws_security_group.proxy[0].id
+  description              = "Allow proxy to connect to Aurora cluster"
+}
+
+# Ingress rule on Aurora cluster: Allow connections from proxy security group
+resource "aws_security_group_rule" "cluster_ingress_from_proxy" {
+  count = local.proxy_enabled ? 1 : 0
+
+  type                     = "ingress"
+  from_port                = var.database_port
+  to_port                  = var.database_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.proxy[0].id
+  security_group_id        = module.aurora_postgres_cluster.security_group_id
+  description              = "Allow connections from RDS Proxy"
+}
+
 module "rds_proxy" {
   source  = "cloudposse/rds-db-proxy/aws"
   version = "1.1.1"
@@ -42,7 +79,7 @@ module "rds_proxy" {
   auth                         = local.proxy_auth
   engine_family                = local.proxy_engine_family
   vpc_subnet_ids               = var.publicly_accessible ? local.public_subnet_ids : local.private_subnet_ids
-  vpc_security_group_ids       = [module.aurora_postgres_cluster.security_group_id]
+  vpc_security_group_ids       = [aws_security_group.proxy[0].id]
   debug_logging                = var.proxy_debug_logging
   idle_client_timeout          = var.proxy_idle_client_timeout
   require_tls                  = var.proxy_require_tls
