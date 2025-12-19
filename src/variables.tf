@@ -450,13 +450,23 @@ variable "proxy_init_query" {
 variable "proxy_max_connections_percent" {
   type        = number
   default     = 100
-  description = "The maximum size of the connection pool for each target in a target group"
+  description = "The maximum size of the connection pool for each target in a target group. Must be between 1 and 100."
+
+  validation {
+    condition     = var.proxy_max_connections_percent >= 1 && var.proxy_max_connections_percent <= 100
+    error_message = "proxy_max_connections_percent must be between 1 and 100 (inclusive)."
+  }
 }
 
 variable "proxy_max_idle_connections_percent" {
   type        = number
   default     = 50
-  description = "Controls how actively the proxy closes idle database connections in the connection pool"
+  description = "Controls how actively the proxy closes idle database connections in the connection pool. Must be between 0 and 100."
+
+  validation {
+    condition     = var.proxy_max_idle_connections_percent >= 0 && var.proxy_max_idle_connections_percent <= 100
+    error_message = "proxy_max_idle_connections_percent must be between 0 and 100 (inclusive)."
+  }
 }
 
 variable "proxy_session_pinning_filters" {

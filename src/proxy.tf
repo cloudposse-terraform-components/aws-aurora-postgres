@@ -1,9 +1,12 @@
 locals {
   proxy_enabled = local.enabled && var.proxy_enabled
 
-  # Determine engine family for proxy based on the engine variable
+  # Supported engine families for RDS Proxy: MYSQL, POSTGRESQL, SQLSERVER
+  # Map the engine variable to the appropriate proxy engine family
   proxy_engine_family = var.engine == "postgresql" ? "POSTGRESQL" : (
-    var.engine == "mysql" ? "MYSQL" : upper(var.engine)
+    var.engine == "mysql" ? "MYSQL" : (
+      var.engine == "sqlserver" ? "SQLSERVER" : upper(var.engine)
+    )
   )
 
   # Get the secret ARN for authentication - either from managed password or user-provided
@@ -35,6 +38,13 @@ module "rds_proxy" {
   count = local.proxy_enabled ? 1 : 0
 
   db_cluster_identifier = module.aurora_postgres_cluster.cluster_identifier
+
+  lifecycle {
+    precondition {
+      condition     = contains(["mysql", "postgresql", "sqlserver"], var.engine)
+      error_message = "RDS Proxy only supports MYSQL, POSTGRESQL, and SQLSERVER engine families. The engine '${var.engine}' is not supported."
+    }
+  }
 
   auth                         = local.proxy_auth
   engine_family                = local.proxy_engine_family
