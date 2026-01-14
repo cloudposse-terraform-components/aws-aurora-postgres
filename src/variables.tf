@@ -47,6 +47,14 @@ variable "storage_type" {
   type        = string
   description = "One of 'standard' (magnetic), 'gp2' (general purpose SSD), 'io1' (provisioned IOPS SSD), 'aurora', or 'aurora-iopt1'"
   default     = null
+
+  validation {
+    condition = (
+      var.storage_type == null ||
+      contains(["standard", "gp2", "io1", "aurora", "aurora-iopt1"], var.storage_type)
+    )
+    error_message = "The storage_type must be one of: 'standard', 'gp2', 'io1', 'aurora', or 'aurora-iopt1'."
+  }
 }
 
 variable "engine" {
