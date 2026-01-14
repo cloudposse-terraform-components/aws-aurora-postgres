@@ -43,6 +43,12 @@ variable "storage_encrypted" {
   description = "Specifies whether the DB cluster is encrypted"
 }
 
+variable "storage_type" {
+  type        = string
+  default     = null
+  description = "One of 'standard' (magnetic), 'gp2' (general purpose SSD), 'io1' (provisioned IOPS SSD), 'aurora', or 'aurora-iopt1'"
+}
+
 variable "engine" {
   type        = string
   description = "Name of the database engine to be used for the DB cluster"
