@@ -32,6 +32,7 @@ module "aurora_postgres_cluster" {
   allowed_cidr_blocks                  = local.allowed_cidr_blocks
   iam_database_authentication_enabled  = var.iam_database_authentication_enabled
   storage_encrypted                    = var.storage_encrypted
+  storage_type                         = var.storage_type
   kms_key_arn                          = var.storage_encrypted ? module.kms_key_rds.key_arn : null
   performance_insights_kms_key_id      = var.performance_insights_enabled ? module.kms_key_rds.key_arn : null
   maintenance_window                   = var.maintenance_window
