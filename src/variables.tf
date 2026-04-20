@@ -398,6 +398,22 @@ variable "cluster_parameters" {
   description = "List of DB cluster parameters to apply"
 }
 
+variable "log_all_statements" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Whether the component should automatically add the `log_statement=all` and
+    `log_min_duration_statement=0` parameters to `cluster_parameters`. When
+    true (default, preserves historical behavior), every executed statement
+    and its duration are logged to the `postgresql` CloudWatch log stream.
+
+    Set to false for production clusters: errors and slow queries can then be
+    scoped explicitly via `cluster_parameters` (e.g. `log_statement=none` and
+    `log_min_duration_statement=1000`), avoiding CloudWatch/Datadog log-volume
+    spikes that can run to tens of GB per day on an active cluster.
+  EOT
+}
+
 variable "retention_period" {
   type        = number
   default     = 5

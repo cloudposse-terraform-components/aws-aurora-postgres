@@ -61,18 +61,21 @@ module "aurora_postgres_cluster" {
   retention_period                     = var.retention_period
   backup_window                        = var.backup_window
 
-  cluster_parameters = concat([
-    {
-      apply_method = "immediate"
-      name         = "log_statement"
-      value        = "all"
-    },
-    {
-      apply_method = "immediate"
-      name         = "log_min_duration_statement"
-      value        = "0"
-    }
-  ], var.cluster_parameters)
+  cluster_parameters = concat(
+    var.log_all_statements ? [
+      {
+        apply_method = "immediate"
+        name         = "log_statement"
+        value        = "all"
+      },
+      {
+        apply_method = "immediate"
+        name         = "log_min_duration_statement"
+        value        = "0"
+      },
+    ] : [],
+    var.cluster_parameters,
+  )
 
   context = module.cluster.context
 }
