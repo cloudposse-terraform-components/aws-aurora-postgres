@@ -34,7 +34,7 @@ module "aurora_postgres_cluster" {
   storage_encrypted                    = var.storage_encrypted
   storage_type                         = var.storage_type
   kms_key_arn                          = var.storage_encrypted ? module.kms_key_rds.key_arn : null
-  performance_insights_kms_key_id      = var.performance_insights_enabled ? module.kms_key_rds.key_arn : null
+  performance_insights_kms_key_id      = var.performance_insights_enabled ? coalesce(var.performance_insights_kms_key_arn, module.kms_key_rds.key_arn) : null
   maintenance_window                   = var.maintenance_window
   enabled_cloudwatch_logs_exports      = var.enabled_cloudwatch_logs_exports
   enhanced_monitoring_role_enabled     = var.enhanced_monitoring_role_enabled

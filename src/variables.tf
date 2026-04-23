@@ -200,6 +200,12 @@ variable "performance_insights_enabled" {
   description = "Whether to enable Performance Insights"
 }
 
+variable "performance_insights_kms_key_arn" {
+  type        = string
+  default     = null
+  description = "ARN of the KMS key for Performance Insights encryption. If null, defaults to the RDS CMK."
+}
+
 variable "database_insights_mode" {
   type        = string
   description = "The database insights mode for the RDS cluster. Valid values are `standard`, `advanced`. See https://registry.terraform.io/providers/hashicorp/aws/6.16.0/docs/resources/rds_cluster#database_insights_mode-1"
