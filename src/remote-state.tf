@@ -35,7 +35,6 @@ module "eks" {
   context = module.cluster.context
 }
 
-
 module "dns_gbl_delegated" {
   source  = "cloudposse/stack-config/yaml//modules/remote-state"
   version = "2.0.0"
