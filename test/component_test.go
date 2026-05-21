@@ -1,15 +1,18 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/cloudposse/test-helpers/pkg/atmos"
 	helper "github.com/cloudposse/test-helpers/pkg/atmos/component-helper"
 	"github.com/gruntwork-io/terratest/modules/aws"
-	"github.com/stretchr/testify/assert"
 	"github.com/gruntwork-io/terratest/modules/random"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type ComponentSuite struct {
@@ -31,7 +34,8 @@ func (s *ComponentSuite) TestBasic() {
 		"database_port":       5432,
 		"publicly_accessible": true,
 		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
-		"cluster_name": clusterName,
+		"cluster_name":        clusterName,
+		"egress_enabled":      false,
 	}
 	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
 	assert.NotNil(s.T(), componentInstance)
@@ -62,6 +66,17 @@ func (s *ComponentSuite) TestBasic() {
 
 	allowedSecurityGroups := atmos.OutputList(s.T(), componentInstance, "allowed_security_groups")
 	assert.Equal(s.T(), 0, len(allowedSecurityGroups))
+
+	securityGroupID := atmos.Output(s.T(), componentInstance, "security_group_id")
+	assert.NotEmpty(s.T(), securityGroupID)
+
+	ec2Client := aws.NewEc2Client(s.T(), awsRegion)
+	sgOut, err := ec2Client.DescribeSecurityGroups(context.Background(), &ec2.DescribeSecurityGroupsInput{
+		GroupIds: []string{securityGroupID},
+	})
+	require.NoError(s.T(), err)
+	require.Len(s.T(), sgOut.SecurityGroups, 1)
+	assert.Empty(s.T(), sgOut.SecurityGroups[0].IpPermissionsEgress, "egress rules should be empty when egress_enabled=false")
 
 	clusterIdentifier := atmos.Output(s.T(), componentInstance, "cluster_identifier")
 
@@ -115,7 +130,7 @@ func (s *ComponentSuite) TestServerless() {
 		"database_port":       5432,
 		"publicly_accessible": true,
 		"allowed_cidr_blocks": []string{"0.0.0.0/0"},
-		"cluster_name": clusterName,
+		"cluster_name":        clusterName,
 	}
 	componentInstance, _ := s.DeployAtmosComponent(s.T(), component, stack, &inputs)
 	assert.NotNil(s.T(), componentInstance)
