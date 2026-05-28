@@ -388,6 +388,16 @@ variable "intra_security_group_traffic_enabled" {
   description = "Whether to allow traffic between resources inside the database's security group."
 }
 
+variable "egress_enabled" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    If `true`, the created security group will allow egress on all ports and protocols to all IP addresses.
+    If `false`, no egress rules will be created by this module; egress must be configured via other means
+    (e.g. additional security group rules) or all outbound traffic will be denied.
+    EOT
+}
+
 variable "cluster_parameters" {
   type = list(object({
     apply_method = string
