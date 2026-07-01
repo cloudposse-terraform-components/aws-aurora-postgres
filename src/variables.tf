@@ -564,7 +564,7 @@ variable "proxy_client_password_auth_type" {
   description = "The type of authentication the proxy uses for connections from clients. Valid values: MYSQL_NATIVE_PASSWORD, POSTGRES_SCRAM_SHA_256, POSTGRES_MD5, SQL_SERVER_AUTHENTICATION"
 
   validation {
-    condition     = var.proxy_client_password_auth_type == null || contains(["MYSQL_NATIVE_PASSWORD", "POSTGRES_SCRAM_SHA_256", "POSTGRES_MD5", "SQL_SERVER_AUTHENTICATION"], var.proxy_client_password_auth_type)
+    condition     = var.proxy_client_password_auth_type == null || can(index(["MYSQL_NATIVE_PASSWORD", "POSTGRES_SCRAM_SHA_256", "POSTGRES_MD5", "SQL_SERVER_AUTHENTICATION"], var.proxy_client_password_auth_type))
     error_message = "Valid values for proxy_client_password_auth_type are: MYSQL_NATIVE_PASSWORD, POSTGRES_SCRAM_SHA_256, POSTGRES_MD5, SQL_SERVER_AUTHENTICATION."
   }
 }
